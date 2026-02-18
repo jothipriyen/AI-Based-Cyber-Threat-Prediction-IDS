@@ -66,17 +66,6 @@ Authentication Logs → Feature Processing → Isolation Forest Model → Risk C
 - Scikit-learn
 - HTML / CSS
 
----
-
-cyber_demo/
-│
-├── app.py
-├── model.py
-├── logs.csv
-├── README.md
-│
-└── templates/
-    └── dashboard.html
 
 
 ---
