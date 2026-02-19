@@ -319,6 +319,76 @@
       border: 1px solid rgba(255,51,102,0.55);
     }
 
+    /* ── Action buttons ─ */
+    .ip-action {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ip-address {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+
+    .btn-block, .btn-unblock {
+      padding: 4px 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: 1px solid;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-block {
+      background: rgba(255,51,102,0.1);
+      color: var(--danger);
+      border-color: rgba(255,51,102,0.4);
+    }
+
+    .btn-block:hover {
+      background: rgba(255,51,102,0.2);
+      border-color: var(--danger);
+    }
+
+    .btn-unblock {
+      background: rgba(0,255,157,0.1);
+      color: var(--low);
+      border-color: rgba(0,255,157,0.4);
+    }
+
+    .btn-unblock:hover {
+      background: rgba(0,255,157,0.2);
+      border-color: var(--low);
+    }
+
+    .blocked-ips-section {
+      margin-top: 32px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .blocked-ip-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      margin: 4px 0;
+      background: rgba(255,51,102,0.05);
+      border: 1px solid rgba(255,51,102,0.2);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
     .risk-badge {
       display: inline-flex;
       align-items: center;
@@ -481,6 +551,12 @@
       <div class="stat-label">Blocked Sessions</div>
       <div class="stat-value">{{ blocked }}</div>
     </div>
+    {% if total_manually_blocked_ips > 0 %}
+    <div class="stat-card blocked">
+      <div class="stat-label">Manual Blocks</div>
+      <div class="stat-value">{{ total_manually_blocked_ips }}</div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Trend -->
@@ -504,12 +580,14 @@
         <tr>
           <th>#</th>
           <th>Hour (UTC)</th>
+          <th>IP Address</th>
           <th>Failed Attempts</th>
           <th>Foreign IP</th>
           <th>Anomaly</th>
           <th>Anomaly Score</th>
           <th>Risk Level</th>
-          <th>Action</th>
+          <th>Status</th>
+          <th>IP Control</th>
         </tr>
       </thead>
       <tbody>
@@ -520,6 +598,9 @@
         <tr class="{{ 'high-row' if is_high else ('anomaly-row' if is_anomaly else '') }}">
           <td class="numeric" style="color: var(--text-dim); font-size:11px;">{{ "%02d"|format(i+1) }}</td>
           <td class="numeric">{{ "%02d"|format(row.hour) }}:00</td>
+          <td>
+            <span class="ip-address">{{ row.ip_address }}</span>
+          </td>
           <td class="numeric {% if row.failed_attempts >= 3 %}danger-text{% endif %}">
             {{ row.failed_attempts }}
           </td>
@@ -561,16 +642,47 @@
           </td>
           <td>
             {% if row.blocked %}
-              <span class="badge badge-blocked">BLOCKED</span>
+              {% if row.manually_blocked %}
+                <span class="badge badge-blocked">MANUALLY BLOCKED</span>
+              {% elif row.auto_blocked %}
+                <span class="badge badge-blocked">AUTO-BLOCKED</span>
+              {% else %}
+                <span class="badge badge-blocked">BLOCKED</span>
+              {% endif %}
             {% else %}
               <span class="badge badge-normal">ALLOWED</span>
             {% endif %}
+          </td>
+          <td>
+            <div class="ip-action">
+              {% if row.manually_blocked %}
+                <a href="/unblock/{{ row.ip_address|urlpath }}" class="btn-unblock">UNBLOCK</a>
+              {% else %}
+                <a href="/block/{{ row.ip_address|urlpath }}" class="btn-block">BLOCK IP</a>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <!-- Blocked IPs Section -->
+  {% if blocked_ips|length > 0 %}
+  <div class="section-header" style="margin-top: 40px;">
+    <span class="section-title">Manually Blocked IP Addresses</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="blocked-ips-section">
+    {% for ip in blocked_ips %}
+    <div class="blocked-ip-item">
+      <span class="ip-address">{{ ip }}</span>
+      <a href="/unblock/{{ ip|urlpath }}" class="btn-unblock">UNBLOCK</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <!-- Footer -->
   <footer>
