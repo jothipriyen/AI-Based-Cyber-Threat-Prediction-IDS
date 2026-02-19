@@ -23,6 +23,8 @@ def urlpath_filter(s):
 
 # Blocked IPs storage file
 BLOCKED_IPS_FILE = "blocked_ips.json"
+# Historical risk profiling storage
+RISK_HISTORY_FILE = "risk_history.json"
 
 
 def load_blocked_ips() -> set:
@@ -44,6 +46,72 @@ def save_blocked_ips(blocked_ips: set) -> None:
     normalized_ips = [str(ip).strip() for ip in blocked_ips]
     with open(BLOCKED_IPS_FILE, "w") as f:
         json.dump(normalized_ips, f, indent=2)
+
+
+def load_risk_history() -> dict:
+    """Load historical risk data per user."""
+    if os.path.exists(RISK_HISTORY_FILE):
+        try:
+            with open(RISK_HISTORY_FILE, "r") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return {}
+    return {}
+
+
+def save_risk_history(risk_history: dict) -> None:
+    """Save historical risk data per user."""
+    with open(RISK_HISTORY_FILE, "w") as f:
+        json.dump(risk_history, f, indent=2)
+
+
+def update_risk_history(df: pd.DataFrame) -> pd.DataFrame:
+    """Track risk history per user and flag repeat offenders."""
+    df = df.copy()
+    risk_history = load_risk_history()
+    
+    # Initialize user risk tracking if not exists
+    if "user_id" not in df.columns:
+        df["repeat_offender"] = False
+        df["risk_history_count"] = 0
+        return df
+    
+    from datetime import datetime
+    
+    # Update history for each user
+    for user_id in df["user_id"].unique():
+        user_rows = df[df["user_id"] == user_id]
+        high_risk_count = len(user_rows[user_rows["risk"] == "HIGH"])
+        medium_risk_count = len(user_rows[user_rows["risk"] == "MEDIUM"])
+        anomaly_count = len(user_rows[user_rows["anomaly"] == -1])
+        
+        if user_id not in risk_history:
+            risk_history[user_id] = {
+                "total_high_risk": 0,
+                "total_medium_risk": 0,
+                "total_anomalies": 0,
+                "first_seen": None,
+                "last_seen": None
+            }
+        
+        risk_history[user_id]["total_high_risk"] += high_risk_count
+        risk_history[user_id]["total_medium_risk"] += medium_risk_count
+        risk_history[user_id]["total_anomalies"] += anomaly_count
+        risk_history[user_id]["last_seen"] = datetime.now().isoformat()
+        if risk_history[user_id]["first_seen"] is None:
+            risk_history[user_id]["first_seen"] = datetime.now().isoformat()
+    
+    # Mark repeat offenders (users with multiple high-risk events)
+    df["repeat_offender"] = df["user_id"].apply(
+        lambda uid: risk_history.get(uid, {}).get("total_high_risk", 0) > 1
+    )
+    df["risk_history_count"] = df["user_id"].apply(
+        lambda uid: risk_history.get(uid, {}).get("total_high_risk", 0) + 
+                    risk_history.get(uid, {}).get("total_medium_risk", 0)
+    )
+    
+    save_risk_history(risk_history)
+    return df
 
 # ──────────────────────────────────────────────
 # MODULE 1: Data Ingestion
@@ -70,10 +138,25 @@ def ingest_data(filepath: str) -> pd.DataFrame:
             else f"203.0.{(i // 250) + 1}.{(i % 250) + 1}"
             for i in idx
         ]
+    
+    # Generate user_id if missing (for historical tracking)
+    if "user_id" not in df.columns:
+        n = len(df)
+        df["user_id"] = [f"user_{i % 20 + 1:03d}" for i in range(n)]
+    
+    # Generate user_role if missing
+    if "user_role" not in df.columns:
+        df["user_role"] = "employee"  # Default to employee
+    
+    # Generate attack_type if missing
+    if "attack_type" not in df.columns:
+        df["attack_type"] = "BENIGN"  # Default to benign
 
     # Select columns for ML features (numeric only)
     feature_cols = ["hour", "failed_attempts", "foreign_ip"]
-    df = df[feature_cols + ["ip_address"]]
+    # Keep all metadata columns
+    metadata_cols = ["ip_address", "user_id", "user_role", "attack_type"]
+    df = df[feature_cols + metadata_cols]
 
     # Validate numeric columns
     for col in feature_cols:
@@ -132,16 +215,39 @@ def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
 # ──────────────────────────────────────────────
 
 def assign_risk(df: pd.DataFrame) -> pd.DataFrame:
-    """Convert anomaly output to human-readable threat levels."""
+    """Convert anomaly output to human-readable threat levels with role-based escalation."""
     df = df.copy()
 
     def classify(row):
+        base_risk = "LOW"
+        
+        # Base risk from anomaly detection
         if row["anomaly"] == -1 and row["failed_attempts"] >= 3:
-            return "HIGH"
+            base_risk = "HIGH"
         elif row["anomaly"] == -1:
-            return "MEDIUM"
-        else:
-            return "LOW"
+            base_risk = "MEDIUM"
+        
+        # Role-based escalation: Admin accounts get higher risk
+        if "user_role" in row and row["user_role"] == "admin":
+            if base_risk == "MEDIUM":
+                base_risk = "HIGH"  # Escalate admin MEDIUM to HIGH
+            elif base_risk == "LOW" and row["anomaly"] == -1:
+                base_risk = "MEDIUM"  # Escalate admin LOW anomaly to MEDIUM
+        
+        # Attack type-based escalation
+        if "attack_type" in row:
+            attack_type = row["attack_type"]
+            if attack_type in ["BRUTE_FORCE", "CREDENTIAL_STUFFING"]:
+                if base_risk == "MEDIUM":
+                    base_risk = "HIGH"
+            elif attack_type == "DATA_EXFILTRATION":
+                # Data exfiltration is always high risk
+                base_risk = "HIGH"
+            elif attack_type == "SUSPICIOUS_LOCATION":
+                if base_risk == "LOW":
+                    base_risk = "MEDIUM"
+        
+        return base_risk
 
     df["risk"] = df.apply(classify, axis=1)
     return df
@@ -180,6 +286,7 @@ def run_pipeline(filepath: str) -> pd.DataFrame:
     df = detect_anomalies(df)
     df = assign_risk(df)
     df = assign_block_status(df)
+    df = update_risk_history(df)  # Add historical tracking
     return df
 
 
@@ -218,6 +325,45 @@ def dashboard():
             "Simulating email notification to security administrator..."
         )
 
+    # Attack type statistics
+    attack_type_counts = {}
+    if "attack_type" in df.columns:
+        attack_type_counts = df["attack_type"].value_counts().to_dict()
+    
+    # Role-based statistics
+    admin_high_risk = 0
+    employee_high_risk = 0
+    if "user_role" in df.columns:
+        admin_high_risk = len(df[(df["user_role"] == "admin") & (df["risk"] == "HIGH")])
+        employee_high_risk = len(df[(df["user_role"] == "employee") & (df["risk"] == "HIGH")])
+    
+    # Repeat offenders (users with multiple high-risk events)
+    repeat_offenders = []
+    if "repeat_offender" in df.columns and "user_id" in df.columns:
+        repeat_offenders_df = df[df["repeat_offender"] == True]
+        if len(repeat_offenders_df) > 0:
+            repeat_offenders = repeat_offenders_df[["user_id", "user_role", "risk_history_count"]].drop_duplicates().to_dict(orient="records")
+    
+    # Historical risk data
+    risk_history = load_risk_history()
+    top_risky_users = []
+    if risk_history:
+        # Sort by total high risk events
+        sorted_users = sorted(
+            risk_history.items(),
+            key=lambda x: x[1].get("total_high_risk", 0) + x[1].get("total_medium_risk", 0),
+            reverse=True
+        )[:10]  # Top 10
+        top_risky_users = [
+            {
+                "user_id": uid,
+                "total_high_risk": data.get("total_high_risk", 0),
+                "total_medium_risk": data.get("total_medium_risk", 0),
+                "total_anomalies": data.get("total_anomalies", 0)
+            }
+            for uid, data in sorted_users
+        ]
+
     # Trend data: anomalies per hour (0–23)
     trend_series = (
         df.groupby("hour")["anomaly"]
@@ -244,6 +390,11 @@ def dashboard():
         alert_triggered=alert_triggered,
         trend_labels=trend_labels,
         trend_values=trend_values,
+        attack_type_counts=attack_type_counts,
+        admin_high_risk=admin_high_risk,
+        employee_high_risk=employee_high_risk,
+        repeat_offenders=repeat_offenders,
+        top_risky_users=top_risky_users,
     )
 
 

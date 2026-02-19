@@ -280,6 +280,7 @@
     tbody tr.anomaly-row:hover { background: rgba(255,170,0,0.08); }
     tbody tr.high-row { background: rgba(255,51,102,0.05); }
     tbody tr.high-row:hover { background: rgba(255,51,102,0.1); }
+    tbody tr.repeat-offender-row { border-left: 3px solid var(--danger); }
 
     td {
       padding: 13px 20px;
@@ -580,7 +581,10 @@
         <tr>
           <th>#</th>
           <th>Hour (UTC)</th>
+          <th>User ID</th>
+          <th>Role</th>
           <th>IP Address</th>
+          <th>Attack Type</th>
           <th>Failed Attempts</th>
           <th>Foreign IP</th>
           <th>Anomaly</th>
@@ -595,11 +599,40 @@
         {% set i = loop.index0 %}
         {% set is_high = row.risk == 'HIGH' %}
         {% set is_anomaly = row.anomaly == -1 %}
-        <tr class="{{ 'high-row' if is_high else ('anomaly-row' if is_anomaly else '') }}">
+        {% set is_repeat_offender = row.get('repeat_offender', False) %}
+        {% set user_role = row.get('user_role', 'employee') %}
+        {% set attack_type = row.get('attack_type', 'BENIGN') %}
+        <tr class="{{ 'high-row' if is_high else ('anomaly-row' if is_anomaly else '') }} {{ 'repeat-offender-row' if is_repeat_offender else '' }}">
           <td class="numeric" style="color: var(--text-dim); font-size:11px;">{{ "%02d"|format(i+1) }}</td>
           <td class="numeric">{{ "%02d"|format(row.hour) }}:00</td>
           <td>
+            <span class="ip-address" style="font-size: 11px;">{{ row.get('user_id', 'N/A') }}</span>
+            {% if is_repeat_offender %}
+              <span class="badge badge-anomaly" style="font-size: 8px; margin-left: 4px;">REPEAT</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if user_role == 'admin' %}
+              <span class="badge" style="background: rgba(255,170,0,0.15); color: var(--warn); border: 1px solid rgba(255,170,0,0.4);">ADMIN</span>
+            {% else %}
+              <span class="badge badge-normal">EMPLOYEE</span>
+            {% endif %}
+          </td>
+          <td>
             <span class="ip-address">{{ row.ip_address }}</span>
+          </td>
+          <td>
+            {% if attack_type == 'BRUTE_FORCE' %}
+              <span class="badge badge-blocked" style="font-size: 9px;">BRUTE-FORCE</span>
+            {% elif attack_type == 'CREDENTIAL_STUFFING' %}
+              <span class="badge badge-blocked" style="font-size: 9px;">CRED-STUFF</span>
+            {% elif attack_type == 'SUSPICIOUS_LOCATION' %}
+              <span class="badge badge-anomaly" style="font-size: 9px;">SUSP-LOC</span>
+            {% elif attack_type == 'DATA_EXFILTRATION' %}
+              <span class="badge badge-blocked" style="font-size: 9px;">DATA-EXFIL</span>
+            {% else %}
+              <span class="badge badge-normal" style="font-size: 9px;">BENIGN</span>
+            {% endif %}
           </td>
           <td class="numeric {% if row.failed_attempts >= 3 %}danger-text{% endif %}">
             {{ row.failed_attempts }}
@@ -667,6 +700,79 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Attack Type Statistics -->
+  {% if attack_type_counts %}
+  <div class="section-header" style="margin-top: 40px;">
+    <span class="section-title">Attack Type Distribution</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="blocked-ips-section">
+    {% for attack_type, count in attack_type_counts.items() %}
+    <div class="blocked-ip-item">
+      <span class="ip-address">{{ attack_type }}</span>
+      <span style="color: var(--accent); font-weight: 700;">{{ count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Role-Based Risk Analysis -->
+  {% if admin_high_risk > 0 or employee_high_risk > 0 %}
+  <div class="section-header" style="margin-top: 40px;">
+    <span class="section-title">Role-Based Risk Analysis</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="blocked-ips-section">
+    <div class="blocked-ip-item">
+      <span class="ip-address">Admin High Risk Events</span>
+      <span style="color: var(--danger); font-weight: 700;">{{ admin_high_risk }}</span>
+    </div>
+    <div class="blocked-ip-item">
+      <span class="ip-address">Employee High Risk Events</span>
+      <span style="color: var(--danger); font-weight: 700;">{{ employee_high_risk }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Repeat Offenders -->
+  {% if repeat_offenders|length > 0 %}
+  <div class="section-header" style="margin-top: 40px;">
+    <span class="section-title">Repeat Offenders (Historical Threat Detection)</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="blocked-ips-section">
+    {% for offender in repeat_offenders %}
+    <div class="blocked-ip-item">
+      <span class="ip-address">
+        {{ offender.user_id }} ({{ offender.user_role|upper }})
+        {% if offender.user_role == 'admin' %}
+          <span class="badge" style="background: rgba(255,170,0,0.15); color: var(--warn); border: 1px solid rgba(255,170,0,0.4); margin-left: 8px;">ADMIN</span>
+        {% endif %}
+      </span>
+      <span style="color: var(--danger); font-weight: 700;">{{ offender.risk_history_count }} risk events</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Top Risky Users (Historical) -->
+  {% if top_risky_users|length > 0 %}
+  <div class="section-header" style="margin-top: 40px;">
+    <span class="section-title">Top Risky Users (Historical Risk Profiling)</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="blocked-ips-section">
+    {% for user in top_risky_users %}
+    <div class="blocked-ip-item">
+      <span class="ip-address">{{ user.user_id }}</span>
+      <span style="color: var(--danger); font-weight: 700;">
+        {{ user.total_high_risk }} HIGH / {{ user.total_medium_risk }} MEDIUM / {{ user.total_anomalies }} anomalies
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <!-- Blocked IPs Section -->
   {% if blocked_ips|length > 0 %}

@@ -1,0 +1,142 @@
+{
+  "user_001": {
+    "total_high_risk": 0,
+    "total_medium_risk": 0,
+    "total_anomalies": 0,
+    "first_seen": "2026-02-19T23:46:19.212059",
+    "last_seen": "2026-02-19T23:49:37.967863"
+  },
+  "user_002": {
+    "total_high_risk": 0,
+    "total_medium_risk": 12,
+    "total_anomalies": 12,
+    "first_seen": "2026-02-19T23:46:19.226063",
+    "last_seen": "2026-02-19T23:49:37.970859"
+  },
+  "user_003": {
+    "total_high_risk": 0,
+    "total_medium_risk": 0,
+    "total_anomalies": 0,
+    "first_seen": "2026-02-19T23:46:19.245057",
+    "last_seen": "2026-02-19T23:49:37.974867"
+  },
+  "user_004": {
+    "total_high_risk": 0,
+    "total_medium_risk": 12,
+    "total_anomalies": 12,
+    "first_seen": "2026-02-19T23:46:19.253050",
+    "last_seen": "2026-02-19T23:49:37.977861"
+  },
+  "user_005": {
+    "total_high_risk": 12,
+    "total_medium_risk": 24,
+    "total_anomalies": 36,
+    "first_seen": "2026-02-19T23:46:19.260058",
+    "last_seen": "2026-02-19T23:49:37.981845"
+  },
+  "user_006": {
+    "total_high_risk": 12,
+    "total_medium_risk": 12,
+    "total_anomalies": 24,
+    "first_seen": "2026-02-19T23:46:19.266080",
+    "last_seen": "2026-02-19T23:49:37.984845"
+  },
+  "user_007": {
+    "total_high_risk": 12,
+    "total_medium_risk": 12,
+    "total_anomalies": 24,
+    "first_seen": "2026-02-19T23:46:19.270636",
+    "last_seen": "2026-02-19T23:49:37.988862"
+  },
+  "user_008": {
+    "total_high_risk": 12,
+    "total_medium_risk": 12,
+    "total_anomalies": 24,
+    "first_seen": "2026-02-19T23:46:19.274623",
+    "last_seen": "2026-02-19T23:49:37.991845"
+  },
+  "user_009": {
+    "total_high_risk": 12,
+    "total_medium_risk": 12,
+    "total_anomalies": 24,
+    "first_seen": "2026-02-19T23:46:19.278638",
+    "last_seen": "2026-02-19T23:49:37.995874"
+  },
+  "user_010": {
+    "total_high_risk": 24,
+    "total_medium_risk": 12,
+    "total_anomalies": 36,
+    "first_seen": "2026-02-19T23:46:19.282621",
+    "last_seen": "2026-02-19T23:49:37.997846"
+  },
+  "user_011": {
+    "total_high_risk": 24,
+    "total_medium_risk": 0,
+    "total_anomalies": 24,
+    "first_seen": "2026-02-19T23:46:19.286624",
+    "last_seen": "2026-02-19T23:49:38.000861"
+  },
+  "user_012": {
+    "total_high_risk": 0,
+    "total_medium_risk": 12,
+    "total_anomalies": 12,
+    "first_seen": "2026-02-19T23:46:19.290636",
+    "last_seen": "2026-02-19T23:49:38.004845"
+  },
+  "user_013": {
+    "total_high_risk": 24,
+    "total_medium_risk": 0,
+    "total_anomalies": 24,
+    "first_seen": "2026-02-19T23:46:19.293618",
+    "last_seen": "2026-02-19T23:49:38.009847"
+  },
+  "user_014": {
+    "total_high_risk": 0,
+    "total_medium_risk": 12,
+    "total_anomalies": 12,
+    "first_seen": "2026-02-19T23:46:19.297623",
+    "last_seen": "2026-02-19T23:49:38.013845"
+  },
+  "user_015": {
+    "total_high_risk": 24,
+    "total_medium_risk": 24,
+    "total_anomalies": 48,
+    "first_seen": "2026-02-19T23:46:19.302622",
+    "last_seen": "2026-02-19T23:49:38.017865"
+  },
+  "user_016": {
+    "total_high_risk": 12,
+    "total_medium_risk": 12,
+    "total_anomalies": 24,
+    "first_seen": "2026-02-19T23:46:19.305631",
+    "last_seen": "2026-02-19T23:49:38.020845"
+  },
+  "user_017": {
+    "total_high_risk": 12,
+    "total_medium_risk": 12,
+    "total_anomalies": 24,
+    "first_seen": "2026-02-19T23:46:19.309618",
+    "last_seen": "2026-02-19T23:49:38.023846"
+  },
+  "user_018": {
+    "total_high_risk": 12,
+    "total_medium_risk": 24,
+    "total_anomalies": 36,
+    "first_seen": "2026-02-19T23:46:19.314636",
+    "last_seen": "2026-02-19T23:49:38.025863"
+  },
+  "user_019": {
+    "total_high_risk": 12,
+    "total_medium_risk": 24,
+    "total_anomalies": 36,
+    "first_seen": "2026-02-19T23:46:19.318626",
+    "last_seen": "2026-02-19T23:49:38.028847"
+  },
+  "user_020": {
+    "total_high_risk": 24,
+    "total_medium_risk": 12,
+    "total_anomalies": 36,
+    "first_seen": "2026-02-19T23:46:19.323622",
+    "last_seen": "2026-02-19T23:49:38.031847"
+  }
+}
