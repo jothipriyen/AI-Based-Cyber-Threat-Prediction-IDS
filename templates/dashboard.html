@@ -288,6 +288,7 @@
     }
 
     td.numeric { color: var(--accent); font-size: 14px; }
+    td.numeric.danger-text { color: var(--danger); }
 
     /* ── Badges ─ */
     .badge {
@@ -377,7 +378,11 @@
       height: 100%;
       border-radius: 2px;
       transition: width 0.4s ease;
+      width: 0%;
     }
+    .score-fill.score-low { background: var(--low); }
+    .score-fill.score-medium { background: var(--warn); }
+    .score-fill.score-high { background: var(--danger); }
 
     .score-val {
       font-size: 11px;
@@ -515,7 +520,7 @@
         <tr class="{{ 'high-row' if is_high else ('anomaly-row' if is_anomaly else '') }}">
           <td class="numeric" style="color: var(--text-dim); font-size:11px;">{{ "%02d"|format(i+1) }}</td>
           <td class="numeric">{{ "%02d"|format(row.hour) }}:00</td>
-          <td class="numeric" style="color: {{ 'var(--danger)' if row.failed_attempts >= 3 else 'var(--accent)' }}">
+          <td class="numeric {% if row.failed_attempts >= 3 %}danger-text{% endif %}">
             {{ row.failed_attempts }}
           </td>
           <td>
@@ -536,12 +541,17 @@
             {% set raw_score = row.anomaly_score %}
             {% set normalized = ((raw_score + 0.5) / 1.0) %}
             {% set normalized = [0.0, [1.0, normalized]|min]|max %}
+            {% set width_pct = (normalized * 100)|round|int %}
+            {% if normalized > 0.5 %}
+              {% set score_class = 'score-low' %}
+            {% elif normalized > 0.25 %}
+              {% set score_class = 'score-medium' %}
+            {% else %}
+              {% set score_class = 'score-high' %}
+            {% endif %}
             <div class="score-bar-wrap">
               <div class="score-bar">
-                <div class="score-fill" style="
-                  width: {{ (normalized * 100)|round|int }}%;
-                  background: {{ 'var(--low)' if normalized > 0.5 else ('var(--warn)' if normalized > 0.25 else 'var(--danger)') }};
-                "></div>
+                <div class="score-fill {{ score_class }}" data-width="{{ width_pct }}"></div>
               </div>
               <span class="score-val">{{ "%.3f"|format(row.anomaly_score) }}</span>
             </div>
@@ -574,10 +584,15 @@
 
 </div>
 <script>
+  // Set score bar widths from data attributes
+  document.querySelectorAll('.score-fill[data-width]').forEach(function(el) {
+    el.style.width = el.getAttribute('data-width') + '%';
+  });
+
   const trendLabels = {{ trend_labels | tojson }};
   const trendValues = {{ trend_values | tojson }};
 
-  if (trendLabels.length > 0) {
+  if (trendLabels && trendLabels.length > 0 && trendValues && trendValues.length > 0) {
     const ctx = document.getElementById('trendChart').getContext('2d');
     new Chart(ctx, {
       type: 'line',

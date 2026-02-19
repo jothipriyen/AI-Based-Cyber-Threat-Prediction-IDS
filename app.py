@@ -145,8 +145,8 @@ def dashboard():
         .apply(lambda s: int((s == -1).sum()))
         .sort_index()
     )
-    trend_labels = trend_series.index.astype(int).tolist()
-    trend_values = trend_series.values.tolist()
+    trend_labels = trend_series.index.astype(int).tolist() if len(trend_series) > 0 else []
+    trend_values = trend_series.values.tolist() if len(trend_series) > 0 else []
 
     records = df.to_dict(orient="records")
 
