@@ -94,6 +94,13 @@ def assign_risk(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def assign_block_status(df: pd.DataFrame) -> pd.DataFrame:
+    """Simulate intrusion prevention by marking HIGH risk events as blocked."""
+    df = df.copy()
+    df["blocked"] = df["risk"] == "HIGH"
+    return df
+
+
 # ──────────────────────────────────────────────
 # PIPELINE RUNNER
 # ──────────────────────────────────────────────
@@ -103,6 +110,7 @@ def run_pipeline(filepath: str) -> pd.DataFrame:
     df = process_features(df)
     df = detect_anomalies(df)
     df = assign_risk(df)
+    df = assign_block_status(df)
     return df
 
 
@@ -121,6 +129,24 @@ def dashboard():
     medium = len(df[df["risk"] == "MEDIUM"])
     low = len(df[df["risk"] == "LOW"])
     anomaly_count = len(df[df["anomaly"] == -1])
+    blocked = len(df[df["blocked"]])
+
+    # Simple email alert simulation when HIGH risk events exist
+    alert_triggered = high > 0
+    if alert_triggered:
+        print(
+            f"[ALERT] {high} HIGH risk authentication events detected. "
+            "Simulating email notification to security administrator..."
+        )
+
+    # Trend data: anomalies per hour (0–23)
+    trend_series = (
+        df.groupby("hour")["anomaly"]
+        .apply(lambda s: int((s == -1).sum()))
+        .sort_index()
+    )
+    trend_labels = trend_series.index.astype(int).tolist()
+    trend_values = trend_series.values.tolist()
 
     records = df.to_dict(orient="records")
 
@@ -131,7 +157,11 @@ def dashboard():
         high=high,
         medium=medium,
         low=low,
-        anomaly_count=anomaly_count
+        anomaly_count=anomaly_count,
+        blocked=blocked,
+        alert_triggered=alert_triggered,
+        trend_labels=trend_labels,
+        trend_values=trend_values,
     )
 
 
