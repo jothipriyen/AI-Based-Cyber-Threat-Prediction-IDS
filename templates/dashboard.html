@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AuthGuard — Threat Detection Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #070b10;
+      --surface:   #0d1520;
+      --border:    #1a2a3a;
+      --accent:    #00d4ff;
+      --accent2:   #00ff9d;
+      --danger:    #ff3366;
+      --warn:      #ffaa00;
+      --low:       #00ff9d;
+      --muted:     #3a5068;
+      --text:      #c8dff0;
+      --text-dim:  #567892;
+      --mono:      'Share Tech Mono', monospace;
+      --sans:      'Barlow Condensed', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Scanline overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,212,255,0.015) 2px,
+        rgba(0,212,255,0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── Grid background ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 36px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .logo-block { display: flex; flex-direction: column; gap: 4px; }
+
+    .logo-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    .logo-name {
+      font-family: var(--sans);
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1;
+      color: #fff;
+    }
+
+    .logo-name span { color: var(--accent); }
+
+    .header-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: right;
+      line-height: 1.8;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,255,157,0.08);
+      border: 1px solid rgba(0,255,157,0.3);
+      color: var(--accent2);
+      padding: 4px 12px;
+      border-radius: 2px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    .status-pill::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent2);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* ── Stat cards ─ */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .stat-card.total::before  { background: var(--accent); }
+    .stat-card.anomaly::before { background: var(--warn); }
+    .stat-card.high::before   { background: var(--danger); }
+    .stat-card.medium::before { background: var(--warn); }
+    .stat-card.low-c::before  { background: var(--low); }
+
+    .stat-card:hover { border-color: var(--accent); }
+
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-family: var(--sans);
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .stat-card.total  .stat-value { color: var(--accent); }
+    .stat-card.anomaly .stat-value { color: var(--warn); }
+    .stat-card.high   .stat-value { color: var(--danger); }
+    .stat-card.medium .stat-value { color: var(--warn); }
+    .stat-card.low-c  .stat-value { color: var(--low); }
+
+    /* ── Section header ─ */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Table ─ */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    thead th {
+      background: #0a1520;
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(26,42,58,0.6);
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover { background: rgba(0,212,255,0.04); }
+
+    tbody tr.anomaly-row { background: rgba(255,170,0,0.04); }
+    tbody tr.anomaly-row:hover { background: rgba(255,170,0,0.08); }
+    tbody tr.high-row { background: rgba(255,51,102,0.05); }
+    tbody tr.high-row:hover { background: rgba(255,51,102,0.1); }
+
+    td {
+      padding: 13px 20px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    td.numeric { color: var(--accent); font-size: 14px; }
+
+    /* ── Badges ─ */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 1px;
+    }
+
+    .badge-normal {
+      background: rgba(0,212,255,0.1);
+      color: var(--accent);
+      border: 1px solid rgba(0,212,255,0.25);
+    }
+
+    .badge-anomaly {
+      background: rgba(255,170,0,0.12);
+      color: var(--warn);
+      border: 1px solid rgba(255,170,0,0.35);
+    }
+
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 1px;
+    }
+
+    .risk-badge::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+    }
+
+    .risk-HIGH {
+      background: rgba(255,51,102,0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255,51,102,0.4);
+    }
+    .risk-HIGH::before { background: var(--danger); }
+
+    .risk-MEDIUM {
+      background: rgba(255,170,0,0.1);
+      color: var(--warn);
+      border: 1px solid rgba(255,170,0,0.3);
+    }
+    .risk-MEDIUM::before { background: var(--warn); }
+
+    .risk-LOW {
+      background: rgba(0,255,157,0.08);
+      color: var(--low);
+      border: 1px solid rgba(0,255,157,0.25);
+    }
+    .risk-LOW::before { background: var(--low); }
+
+    /* ── Score bar ─ */
+    .score-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 160px;
+    }
+
+    .score-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .score-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    .score-val {
+      font-size: 11px;
+      color: var(--text-dim);
+      min-width: 44px;
+      text-align: right;
+    }
+
+    /* ── Footer ─ */
+    footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── Animations ─ */
+    .stat-card {
+      animation: fadeUp 0.4s ease both;
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.10s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.20s; }
+    .stat-card:nth-child(5) { animation-delay: 0.25s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .table-wrap {
+      animation: fadeUp 0.5s ease 0.3s both;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <header>
+    <div class="logo-block">
+      <span class="logo-tag">// SYSTEM ACTIVE</span>
+      <div class="logo-name">Auth<span>Guard</span></div>
+    </div>
+    <div class="header-meta">
+      <div><span class="status-pill">PIPELINE RUNNING</span></div>
+      <br>
+      MODULE: Isolation Forest · CONTAMINATION: 0.20<br>
+      ALGORITHM: Unsupervised Anomaly Detection<br>
+      SCOPE: Authentication Layer · Batch Mode
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card total">
+      <div class="stat-label">Total Events</div>
+      <div class="stat-value">{{ total }}</div>
+    </div>
+    <div class="stat-card anomaly">
+      <div class="stat-label">Anomalies</div>
+      <div class="stat-value">{{ anomaly_count }}</div>
+    </div>
+    <div class="stat-card high">
+      <div class="stat-label">High Risk</div>
+      <div class="stat-value">{{ high }}</div>
+    </div>
+    <div class="stat-card medium">
+      <div class="stat-label">Medium Risk</div>
+      <div class="stat-value">{{ medium }}</div>
+    </div>
+    <div class="stat-card low-c">
+      <div class="stat-label">Low Risk</div>
+      <div class="stat-value">{{ low }}</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="section-header">
+    <span class="section-title">Authentication Event Log</span>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Hour (UTC)</th>
+          <th>Failed Attempts</th>
+          <th>Foreign IP</th>
+          <th>Anomaly</th>
+          <th>Anomaly Score</th>
+          <th>Risk Level</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in records %}
+        {% set i = loop.index0 %}
+        {% set is_high = row.risk == 'HIGH' %}
+        {% set is_anomaly = row.anomaly == -1 %}
+        <tr class="{{ 'high-row' if is_high else ('anomaly-row' if is_anomaly else '') }}">
+          <td class="numeric" style="color: var(--text-dim); font-size:11px;">{{ "%02d"|format(i+1) }}</td>
+          <td class="numeric">{{ "%02d"|format(row.hour) }}:00</td>
+          <td class="numeric" style="color: {{ 'var(--danger)' if row.failed_attempts >= 3 else 'var(--accent)' }}">
+            {{ row.failed_attempts }}
+          </td>
+          <td>
+            {% if row.foreign_ip == 1 %}
+              <span class="badge badge-anomaly">YES</span>
+            {% else %}
+              <span class="badge badge-normal">NO</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.anomaly == -1 %}
+              <span class="badge badge-anomaly">ANOMALY</span>
+            {% else %}
+              <span class="badge badge-normal">NORMAL</span>
+            {% endif %}
+          </td>
+          <td>
+            {% set raw_score = row.anomaly_score %}
+            {% set normalized = ((raw_score + 0.5) / 1.0) %}
+            {% set normalized = [0.0, [1.0, normalized]|min]|max %}
+            <div class="score-bar-wrap">
+              <div class="score-bar">
+                <div class="score-fill" style="
+                  width: {{ (normalized * 100)|round|int }}%;
+                  background: {{ 'var(--low)' if normalized > 0.5 else ('var(--warn)' if normalized > 0.25 else 'var(--danger)') }};
+                "></div>
+              </div>
+              <span class="score-val">{{ "%.3f"|format(row.anomaly_score) }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="risk-badge risk-{{ row.risk }}">{{ row.risk }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-text">
+      AuthGuard MVP · Unsupervised ML · IsolationForest · sklearn
+    </div>
+    <div class="footer-text">
+      PIPELINE: ingest → process → detect → score → render
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
+
