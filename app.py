@@ -152,10 +152,18 @@ def ingest_data(filepath: str) -> pd.DataFrame:
     if "attack_type" not in df.columns:
         df["attack_type"] = "BENIGN"  # Default to benign
 
+    # Geo columns
+    if "country" not in df.columns:
+        df["country"] = "Unknown"
+    if "latitude" not in df.columns:
+        df["latitude"] = 0.0
+    if "longitude" not in df.columns:
+        df["longitude"] = 0.0
+
     # Select columns for ML features (numeric only)
     feature_cols = ["hour", "failed_attempts", "foreign_ip"]
     # Keep all metadata columns
-    metadata_cols = ["ip_address", "user_id", "user_role", "attack_type"]
+    metadata_cols = ["ip_address", "user_id", "user_role", "attack_type", "country", "latitude", "longitude"]
     df = df[feature_cols + metadata_cols]
 
     # Validate numeric columns

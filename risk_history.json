@@ -4,139 +4,139 @@
     "total_medium_risk": 0,
     "total_anomalies": 0,
     "first_seen": "2026-02-19T23:46:19.212059",
-    "last_seen": "2026-02-19T23:49:37.967863"
+    "last_seen": "2026-02-20T20:39:21.108268"
   },
   "user_002": {
     "total_high_risk": 0,
-    "total_medium_risk": 12,
-    "total_anomalies": 12,
+    "total_medium_risk": 26,
+    "total_anomalies": 26,
     "first_seen": "2026-02-19T23:46:19.226063",
-    "last_seen": "2026-02-19T23:49:37.970859"
+    "last_seen": "2026-02-20T20:39:21.116303"
   },
   "user_003": {
     "total_high_risk": 0,
     "total_medium_risk": 0,
     "total_anomalies": 0,
     "first_seen": "2026-02-19T23:46:19.245057",
-    "last_seen": "2026-02-19T23:49:37.974867"
+    "last_seen": "2026-02-20T20:39:21.126340"
   },
   "user_004": {
     "total_high_risk": 0,
-    "total_medium_risk": 12,
-    "total_anomalies": 12,
+    "total_medium_risk": 26,
+    "total_anomalies": 26,
     "first_seen": "2026-02-19T23:46:19.253050",
-    "last_seen": "2026-02-19T23:49:37.977861"
+    "last_seen": "2026-02-20T20:39:21.134348"
   },
   "user_005": {
-    "total_high_risk": 12,
-    "total_medium_risk": 24,
-    "total_anomalies": 36,
+    "total_high_risk": 26,
+    "total_medium_risk": 52,
+    "total_anomalies": 78,
     "first_seen": "2026-02-19T23:46:19.260058",
-    "last_seen": "2026-02-19T23:49:37.981845"
+    "last_seen": "2026-02-20T20:39:21.143241"
   },
   "user_006": {
-    "total_high_risk": 12,
-    "total_medium_risk": 12,
-    "total_anomalies": 24,
+    "total_high_risk": 26,
+    "total_medium_risk": 26,
+    "total_anomalies": 52,
     "first_seen": "2026-02-19T23:46:19.266080",
-    "last_seen": "2026-02-19T23:49:37.984845"
+    "last_seen": "2026-02-20T20:39:21.153351"
   },
   "user_007": {
-    "total_high_risk": 12,
-    "total_medium_risk": 12,
-    "total_anomalies": 24,
+    "total_high_risk": 26,
+    "total_medium_risk": 26,
+    "total_anomalies": 52,
     "first_seen": "2026-02-19T23:46:19.270636",
-    "last_seen": "2026-02-19T23:49:37.988862"
+    "last_seen": "2026-02-20T20:39:21.162353"
   },
   "user_008": {
-    "total_high_risk": 12,
-    "total_medium_risk": 12,
-    "total_anomalies": 24,
+    "total_high_risk": 26,
+    "total_medium_risk": 26,
+    "total_anomalies": 52,
     "first_seen": "2026-02-19T23:46:19.274623",
-    "last_seen": "2026-02-19T23:49:37.991845"
+    "last_seen": "2026-02-20T20:39:21.169349"
   },
   "user_009": {
-    "total_high_risk": 12,
-    "total_medium_risk": 12,
-    "total_anomalies": 24,
+    "total_high_risk": 26,
+    "total_medium_risk": 26,
+    "total_anomalies": 52,
     "first_seen": "2026-02-19T23:46:19.278638",
-    "last_seen": "2026-02-19T23:49:37.995874"
+    "last_seen": "2026-02-20T20:39:21.176250"
   },
   "user_010": {
-    "total_high_risk": 24,
-    "total_medium_risk": 12,
-    "total_anomalies": 36,
+    "total_high_risk": 52,
+    "total_medium_risk": 26,
+    "total_anomalies": 78,
     "first_seen": "2026-02-19T23:46:19.282621",
-    "last_seen": "2026-02-19T23:49:37.997846"
+    "last_seen": "2026-02-20T20:39:21.184241"
   },
   "user_011": {
-    "total_high_risk": 24,
+    "total_high_risk": 52,
     "total_medium_risk": 0,
-    "total_anomalies": 24,
+    "total_anomalies": 52,
     "first_seen": "2026-02-19T23:46:19.286624",
-    "last_seen": "2026-02-19T23:49:38.000861"
+    "last_seen": "2026-02-20T20:39:21.193245"
   },
   "user_012": {
     "total_high_risk": 0,
-    "total_medium_risk": 12,
-    "total_anomalies": 12,
+    "total_medium_risk": 26,
+    "total_anomalies": 26,
     "first_seen": "2026-02-19T23:46:19.290636",
-    "last_seen": "2026-02-19T23:49:38.004845"
+    "last_seen": "2026-02-20T20:39:21.201362"
   },
   "user_013": {
-    "total_high_risk": 24,
+    "total_high_risk": 52,
     "total_medium_risk": 0,
-    "total_anomalies": 24,
+    "total_anomalies": 52,
     "first_seen": "2026-02-19T23:46:19.293618",
-    "last_seen": "2026-02-19T23:49:38.009847"
+    "last_seen": "2026-02-20T20:39:21.209342"
   },
   "user_014": {
     "total_high_risk": 0,
-    "total_medium_risk": 12,
-    "total_anomalies": 12,
+    "total_medium_risk": 26,
+    "total_anomalies": 26,
     "first_seen": "2026-02-19T23:46:19.297623",
-    "last_seen": "2026-02-19T23:49:38.013845"
+    "last_seen": "2026-02-20T20:39:21.218244"
   },
   "user_015": {
-    "total_high_risk": 24,
-    "total_medium_risk": 24,
-    "total_anomalies": 48,
+    "total_high_risk": 52,
+    "total_medium_risk": 52,
+    "total_anomalies": 104,
     "first_seen": "2026-02-19T23:46:19.302622",
-    "last_seen": "2026-02-19T23:49:38.017865"
+    "last_seen": "2026-02-20T20:39:21.231718"
   },
   "user_016": {
-    "total_high_risk": 12,
-    "total_medium_risk": 12,
-    "total_anomalies": 24,
+    "total_high_risk": 26,
+    "total_medium_risk": 26,
+    "total_anomalies": 52,
     "first_seen": "2026-02-19T23:46:19.305631",
-    "last_seen": "2026-02-19T23:49:38.020845"
+    "last_seen": "2026-02-20T20:39:21.246214"
   },
   "user_017": {
-    "total_high_risk": 12,
-    "total_medium_risk": 12,
-    "total_anomalies": 24,
+    "total_high_risk": 26,
+    "total_medium_risk": 26,
+    "total_anomalies": 52,
     "first_seen": "2026-02-19T23:46:19.309618",
-    "last_seen": "2026-02-19T23:49:38.023846"
+    "last_seen": "2026-02-20T20:39:21.255750"
   },
   "user_018": {
-    "total_high_risk": 12,
-    "total_medium_risk": 24,
-    "total_anomalies": 36,
+    "total_high_risk": 26,
+    "total_medium_risk": 52,
+    "total_anomalies": 78,
     "first_seen": "2026-02-19T23:46:19.314636",
-    "last_seen": "2026-02-19T23:49:38.025863"
+    "last_seen": "2026-02-20T20:39:21.266939"
   },
   "user_019": {
-    "total_high_risk": 12,
-    "total_medium_risk": 24,
-    "total_anomalies": 36,
+    "total_high_risk": 26,
+    "total_medium_risk": 52,
+    "total_anomalies": 78,
     "first_seen": "2026-02-19T23:46:19.318626",
-    "last_seen": "2026-02-19T23:49:38.028847"
+    "last_seen": "2026-02-20T20:39:21.280063"
   },
   "user_020": {
-    "total_high_risk": 24,
-    "total_medium_risk": 12,
-    "total_anomalies": 36,
+    "total_high_risk": 52,
+    "total_medium_risk": 26,
+    "total_anomalies": 78,
     "first_seen": "2026-02-19T23:46:19.323622",
-    "last_seen": "2026-02-19T23:49:38.031847"
+    "last_seen": "2026-02-20T20:39:21.294841"
   }
 }

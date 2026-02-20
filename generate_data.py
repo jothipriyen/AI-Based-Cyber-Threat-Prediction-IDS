@@ -22,7 +22,7 @@ def generate_ip_address(is_foreign: bool = False) -> str:
 
 
 def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.csv") -> None:
-    """Generate synthetic authentication log data with attack types, user roles, and user IDs.
+    """Generate synthetic authentication log data with geo, attack types, roles, and users.
 
     Columns:
     - hour: 0–23
@@ -32,12 +32,27 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
     - user_id: unique user identifier
     - user_role: admin / employee
     - attack_type: BRUTE_FORCE / CREDENTIAL_STUFFING / SUSPICIOUS_LOCATION / DATA_EXFILTRATION / BENIGN
+    - country: login origin country
+    - latitude, longitude: geo coordinates
     - login_success: 1 = success, 0 = failure
     - session_duration: session length in minutes
     - data_transfer_mb: approximate MB transferred in session
     """
     records: List[list] = []
-    
+
+    # Fixed country → lat/lon mapping (approximate centroids)
+    country_geo = {
+        "India": {"lat": 20.5937, "lon": 78.9629},
+        "USA": {"lat": 37.0902, "lon": -95.7129},
+        "Germany": {"lat": 51.1657, "lon": 10.4515},
+        "Russia": {"lat": 61.5240, "lon": 105.3188},
+        "Brazil": {"lat": -14.2350, "lon": -51.9253},
+        "China": {"lat": 35.8617, "lon": 104.1954},
+    }
+
+    local_countries = ["India"]
+    foreign_countries = ["USA", "Germany", "Russia", "Brazil", "China"]
+
     # Generate user pool (mix of admins and employees)
     num_users = max(20, rows // 10)  # ~10 events per user on average
     user_pool = []
@@ -53,7 +68,7 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
 
         # Determine attack type based on behavior patterns
         rand_val = random.random()
-        
+
         if rand_val < 0.05:  # 5% Brute-force attack
             failed_attempts = random.randint(5, 10)
             foreign_ip = random.choice([0, 1])  # Can be local or foreign
@@ -62,7 +77,7 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
             login_success = 0
             session_duration = random.randint(1, 3)
             data_transfer = random.randint(1, 10)
-            
+
         elif rand_val < 0.08:  # 3% Credential stuffing
             failed_attempts = random.randint(3, 6)
             foreign_ip = 1  # Usually from foreign IPs
@@ -71,7 +86,7 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
             login_success = 0
             session_duration = random.randint(1, 5)
             data_transfer = random.randint(1, 15)
-            
+
         elif rand_val < 0.10:  # 2% Suspicious location login
             failed_attempts = random.randint(0, 2)
             foreign_ip = 1  # Foreign IP
@@ -80,7 +95,7 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
             login_success = random.choice([0, 1])  # May succeed
             session_duration = random.randint(5, 30)
             data_transfer = random.randint(10, 50)
-            
+
         elif rand_val < 0.12:  # 2% Data exfiltration pattern
             failed_attempts = random.randint(0, 1)
             foreign_ip = random.choice([0, 1])
@@ -89,7 +104,7 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
             login_success = 1  # Usually succeeds (insider threat)
             session_duration = random.randint(30, 120)
             data_transfer = random.randint(200, 500)  # High data transfer
-            
+
         else:  # 88% Benign traffic
             failed_attempts = random.randint(0, 2)
             foreign_ip = random.choice([0, 0, 0, 0, 1])  # Mostly local
@@ -98,6 +113,16 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
             login_success = 1 if failed_attempts <= 2 else 0
             session_duration = random.randint(10, 60)
             data_transfer = random.randint(1, 40)
+
+        # Choose country based on foreign_ip flag
+        if foreign_ip == 0:
+            country = random.choice(local_countries)
+        else:
+            country = random.choice(foreign_countries)
+        geo = country_geo[country]
+        # small jitter so markers don't overlap exactly
+        latitude = geo["lat"] + random.uniform(-1.0, 1.0)
+        longitude = geo["lon"] + random.uniform(-1.0, 1.0)
 
         records.append(
             [
@@ -108,6 +133,9 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
                 user_id,
                 user_role,
                 attack_type,
+                country,
+                latitude,
+                longitude,
                 login_success,
                 session_duration,
                 data_transfer,
@@ -124,6 +152,9 @@ def generate_authentication_data(rows: int = 200, output_path: str = "auth_logs.
             "user_id",
             "user_role",
             "attack_type",
+            "country",
+            "latitude",
+            "longitude",
             "login_success",
             "session_duration",
             "data_transfer_mb",

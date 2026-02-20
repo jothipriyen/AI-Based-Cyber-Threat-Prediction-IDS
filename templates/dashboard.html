@@ -334,6 +334,12 @@
       letter-spacing: 0.5px;
     }
 
+    .ip-link {
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+    }
+
     .btn-block, .btn-unblock {
       padding: 4px 10px;
       font-family: var(--mono);
@@ -498,7 +504,24 @@
     .table-wrap {
       animation: fadeUp 0.5s ease 0.3s both;
     }
+
+    #loginMap {
+      height: 320px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
   </style>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -560,6 +583,13 @@
     {% endif %}
   </div>
 
+  <!-- Geo Map -->
+  <div class="section-header">
+    <span class="section-title">Login Geo Distribution</span>
+    <div class="section-line"></div>
+  </div>
+  <div id="loginMap"></div>
+
   <!-- Trend -->
   <div class="section-header">
     <span class="section-title">Anomaly Trend by Hour</span>
@@ -619,7 +649,7 @@
             {% endif %}
           </td>
           <td>
-            <span class="ip-address">{{ row.ip_address }}</span>
+            <span class="ip-address ip-link" data-ip="{{ row.ip_address }}">{{ row.ip_address }}</span>
           </td>
           <td>
             {% if attack_type == 'BRUTE_FORCE' %}
@@ -805,6 +835,62 @@
   // Set score bar widths from data attributes
   document.querySelectorAll('.score-fill[data-width]').forEach(function(el) {
     el.style.width = el.getAttribute('data-width') + '%';
+  });
+
+  // Leaflet map for geo visualization
+  const map = L.map('loginMap').setView([20, 0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 6,
+    minZoom: 1,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  const geoRecords = {{ records | tojson }};
+  const markerByIp = {};
+  geoRecords.forEach(function(rec) {
+    if (rec.latitude === null || rec.longitude === null) return;
+    const lat = parseFloat(rec.latitude);
+    const lon = parseFloat(rec.longitude);
+    if (isNaN(lat) || isNaN(lon)) return;
+
+    let color = '#00ff9d';
+    if (rec.risk === 'HIGH') color = '#ff3366';
+    else if (rec.risk === 'MEDIUM') color = '#ffaa00';
+
+    const marker = L.circleMarker([lat, lon], {
+      radius: 6,
+      color: color,
+      fillColor: color,
+      fillOpacity: 0.8,
+      weight: 1
+    }).addTo(map);
+
+    // store for IP → marker lookup
+    if (rec.ip_address) {
+      markerByIp[rec.ip_address] = marker;
+    }
+
+    const tooltip = `
+      <div style="font-family: 'Share Tech Mono', monospace; font-size: 11px;">
+        <b>IP:</b> ${rec.ip_address}<br/>
+        <b>Country:</b> ${rec.country || 'N/A'}<br/>
+        <b>Risk:</b> ${rec.risk}<br/>
+        <b>Failed Attempts:</b> ${rec.failed_attempts}
+      </div>
+    `;
+    marker.bindPopup(tooltip);
+  });
+
+  // Click on IP in table → focus map on that IP
+  document.querySelectorAll('.ip-link[data-ip]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      const ip = el.getAttribute('data-ip');
+      const marker = markerByIp[ip];
+      if (!marker) return;
+      const latlng = marker.getLatLng();
+      map.setView(latlng, 4);
+      marker.openPopup();
+    });
   });
 
   const trendLabels = {{ trend_labels | tojson }};
