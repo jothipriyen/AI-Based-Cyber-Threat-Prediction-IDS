@@ -125,9 +125,8 @@ The system flags this as a high-risk authentication attempt.
 
 CyberPulse Team  
 - Jothi Priyen P  
-- ThiruMurugan T  
-- Reema Shri A  
-
+- Dharun Kaarthick S
+  
 ---
 
 ## 📜 License
